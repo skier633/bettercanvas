@@ -220,6 +220,13 @@ function startExtension() {
         options = { ...options, ...result };
         toggleAutoDarkMode();
         getApiData();
+        // Safari port: refresh the course list ourselves on the dashboard
+        if (current_page === "/" || current_page === "") {
+            try {
+                if (options["card_method_dashboard"] === true) setTimeout(getCardsFromDashboard, 1500);
+                else getCards();
+            } catch (e) { console.log("Better Canvas - couldn't refresh courses", e); }
+        }
         checkDashboardReady();
         loadCustomFont();
         applyAestheticChanges();
@@ -259,6 +266,9 @@ function applyOptionsChanges(changes) {
             case ("auto_dark_start"):
             case ("auto_dark_end"):
                 toggleAutoDarkMode();
+                break;
+            case ("theme_images"):
+                customizeCards();
                 break;
             case ("gradient_cards"):
                 changeGradientCards();
@@ -608,7 +618,9 @@ async function getCards(api = null) {
         } catch (e) {
             console.log(e);
         } finally {
-            return chrome.storage.sync.set(newCards ? { "custom_cards": cards, "custom_cards_2": cards_2, "custom_cards_3": cards_3 } : {});
+            return chrome.storage.sync.set(newCards ? { "custom_cards": cards, "custom_cards_2": cards_2, "custom_cards_3": cards_3 } : {})
+                .then(() => console.log("Better Canvas - saved " + Object.keys(cards).length + " courses"))
+                .catch(e => console.log("Better Canvas - couldn't save courses", e));
         }
     });
 }
@@ -1545,16 +1557,37 @@ function getCardId(card) {
     return -1;
 }
 
+function applyCardImage(card, url) {
+    let topColor = card.querySelector(".ic-DashboardCard__header_hero");
+    let container = card.querySelector(".ic-DashboardCard__header_image") || makeElement("div", card, { "className": "ic-DashboardCard__header_image" });
+    card.querySelector(".ic-DashboardCard__header").prepend(container);
+    if (topColor) {
+        container.appendChild(topColor);
+        topColor.style.opacity = .5;
+    }
+    container.style.backgroundImage = "url(\"" + url + "\")";
+}
+
 function customizeCards(c = null) {
     if (!options.custom_cards) return;
     try {
         let cards = c ? c : document.querySelectorAll('.ic-DashboardCard');
         if (cards.length && cards.length > 0 && cards[0].querySelectorAll(".ic-DashboardCard__link").length === 0) return;
 
-        cards.forEach(card => {
+        const themeImages = Array.isArray(options["theme_images"]) ? options["theme_images"].filter(x => x) : [];
+        cards.forEach((card, index) => { try {
             const id = getCardId(card);
             let cardOptions = options["custom_cards"][id] || null;
-            let cardOptions_2 = options["custom_cards_2"][id] || null;
+            let cardOptions_2 = (options["custom_cards_2"] || {})[id] || null;
+            // Safari port: give theme pictures to cards that have no picture of their own
+            if (themeImages.length && (!cardOptions || !cardOptions.img)) {
+                const fill = themeImages[index % themeImages.length];
+                if (!cardOptions) {
+                    applyCardImage(card, fill);
+                    return;
+                }
+                cardOptions = { ...cardOptions, "img": fill };
+            }
             if (!cardOptions) return;
             // hide card
             card.style.display = cardOptions.hidden === true ? "none" : "inline-block";
@@ -1566,12 +1599,7 @@ function customizeCards(c = null) {
                     card.querySelector(".ic-DashboardCard__header_hero").style.opacity = 1;
                 }
             } else if (cardOptions.img !== "") {
-                let topColor = card.querySelector(".ic-DashboardCard__header_hero");
-                let container = card.querySelector(".ic-DashboardCard__header_image") || makeElement("div", card, { "className": "ic-DashboardCard__header_image" });
-                card.querySelector(".ic-DashboardCard__header").prepend(container);
-                container.appendChild(topColor);
-                container.style.backgroundImage = "url(\"" + cardOptions.img + "\")";
-                topColor.style.opacity = .5;
+                applyCardImage(card, cardOptions.img);
             }
 
             // card name
@@ -1584,7 +1612,8 @@ function customizeCards(c = null) {
                 card.querySelector(".ic-DashboardCard__header-subtitle").textContent = cardOptions.code;
             }
 
-            // card links
+            // card links (Safari port: skip if this course's link settings were never saved)
+            if (!cardOptions_2 || !Array.isArray(cardOptions_2.links) || cardOptions_2.links.length < 4) return;
             let links = card.querySelectorAll(".ic-DashboardCard__action");
             for (let i = links.length; i < 4; i++) {
                 makeElement("a", card.querySelector(".ic-DashboardCard__action-container"), { "className": "ic-DashboardCard__action" });
@@ -1609,7 +1638,7 @@ function customizeCards(c = null) {
                 })
             }
 
-        });
+        } catch (e) { console.log("Better Canvas - skipped a card", e); } });
 
     } catch (e) {
         logError(e);

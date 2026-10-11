@@ -1645,14 +1645,15 @@ function importTheme(theme) {
                         sendFromPopup("setcolors", theme["card_colors"]);
                         break;
                     case "custom_cards":
+                        // Safari port: keep theme pictures as one short list; the page hands them out.
+                        // This works for courses that haven't been saved yet and keeps storage small.
                         if (theme["custom_cards"].length > 0) {
-                            let pos = 0;
-                            Object.keys(sync["custom_cards"]).forEach(key => {
-                                sync["custom_cards"][key].img = theme["custom_cards"][pos];
-                                pos = (pos === theme["custom_cards"].length - 1) ? 0 : pos + 1;
+                            Object.keys(sync["custom_cards"] || {}).forEach(key => {
+                                if (sync["custom_cards"][key].img !== "none") sync["custom_cards"][key].img = "";
                             });
+                            final["custom_cards"] = sync["custom_cards"] || {};
                         }
-                        final["custom_cards"] = sync["custom_cards"];
+                        final["theme_images"] = theme["custom_cards"];
                         break;
                     default:
                         final[key] = theme[key];

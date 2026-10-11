@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Better Canvas",
+  "name": "Better Canvas (Safari port)",
   "description": "Feature packed extension for Canvas.",
   "version": "5.12.6",
   "icons": {
@@ -23,12 +23,15 @@
   "options_page": "html/options.html",
   "content_scripts": [
     {
-      "matches": ["https://*/*"],
+      "matches": ["https://canvas.uw.edu/*", "https://*.instructure.com/*"],
       "js": ["js/content.js"],
       "css": ["css/content.css"],
       "run_at": "document_start"
     }
   ],
   "permissions": ["storage"],
-  "default_locale": "en"
+  "default_locale": "en",
+  "browser_specific_settings": {
+    "safari": { "strict_min_version": "16.4" }
+  }
 }

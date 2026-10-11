@@ -126,4 +126,4 @@ chrome.runtime.onInstalled.addListener(function () {
     });
 });
 
-chrome.runtime.setUninstallURL("https://diditupe.dev/bettercanvas/goodbye");
+try { chrome.runtime.setUninstallURL && chrome.runtime.setUninstallURL("https://diditupe.dev/bettercanvas/goodbye"); } catch (e) {}

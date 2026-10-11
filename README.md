@@ -2,6 +2,10 @@
 
 # Better Canvas
 
+> **Unofficial Safari port of Better Canvas 5.12.6.** Not affiliated with BetterCampus, the original authors, or Apple.
+> All the features come from the original project; this fork only adds what's needed to run it in Safari on a Mac. See [Safari port](#safari-port) below.
+
+
 Enhancements to Canvas like dark mode, better todo list, GPA calculator, and more!
 
 ### Supported on
@@ -290,3 +294,26 @@ No public redistribution. You may not publicly re-upload, fork, or distribute th
 Competing services prohibited. You may not use this software, modified or unmodified, to create or offer a public or private alternative to BetterCanvas — even if the service is offered for free.
 
 ![Better Canvas](/icon/icon-48.png)
+
+## Safari port
+
+### What's different from the original
+- Runs only on `canvas.uw.edu` and `*.instructure.com`. If your school uses a different Canvas address, add it to `content_scripts.matches` in `manifest.json`.
+- Theme pictures now reach every course card. In the original, a course with missing link settings caused an error that stopped every card after it from being customized.
+- The dashboard refreshes the saved course list itself, instead of waiting for a message from the popup.
+- Theme pictures are saved as one short list and handed out as cards load, so courses added later still get one.
+
+### Building it
+You need a Mac with Xcode (free from the Mac App Store). A paid Apple developer account isn't needed for your own use.
+
+1. Clone this repo.
+2. Run Apple's converter on the folder:
+   ```
+   xcrun safari-web-extension-converter path/to/this/repo --macos-only --app-name "Better Canvas" --bundle-identifier com.YOURNAME.bettercanvas
+   ```
+3. In Xcode, under **Signing & Capabilities**, set **Team** to your Personal Team for both the app and the extension targets.
+4. Press **⌘R**, then turn the extension on in **Safari → Settings → Extensions**. If it isn't listed, enable **Settings → Developer → Allow unsigned extensions**; Safari turns that off every time it quits.
+5. On your Canvas page, click the extension's toolbar icon and choose **Always Allow on This Website**.
+
+### License
+Same as the original: GNU AGPL v3. See `LICENSE`.
